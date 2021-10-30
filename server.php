@@ -40,8 +40,8 @@ while (true) {
 
     if ($delayNextLoop !== null) {
         $second = $delayNextLoop > 999999999 ? (round($delayNextLoop / 1000000000) == 0 ? 1 : round($delayNextLoop / 1000000000)) : 0;
-        $nanoSecond = $delayNextLoop / 100000 > 999999999 ? 0 : $delayNextLoop / 100000;
-        $delayNextLoop = [$second, $nanoSecond];
+        $miliSecond = $delayNextLoop / 100000 > 999999999 ? 0 : $delayNextLoop / 100000;
+        $delayNextLoop = [$second, $miliSecond];
     } else {
         $delayNextLoop = [0, 3000000];
     }
