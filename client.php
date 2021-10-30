@@ -5,7 +5,6 @@ stream_set_blocking($fp, false);
 if (!$fp) {
     echo "$errstr ($errno)<br />\n";
 } else {
-
     while (true) {
         if ($c = fgets($fp, 1024)) {
             echo $c . PHP_EOL;

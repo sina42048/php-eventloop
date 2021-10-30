@@ -54,7 +54,7 @@ while (true) {
                     $written = fwrite($w, $msg);
                     if ($written === strlen($msg)) {
                         unset($messageQueue[$peer][$key]);
-                        if (empty($messageQueue[$key])) {
+                        if (empty($messageQueue[$peer])) {
                             unset($write[$peer]);
                             unset($messageQueue[$peer]);
                         }
