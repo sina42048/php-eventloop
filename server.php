@@ -43,7 +43,7 @@ while (true) {
         $miliSecond = $delayNextLoop / 100000 > 999999999 ? 0 : $delayNextLoop / 100000;
         $delayNextLoop = [$second, $miliSecond];
     } else {
-        $delayNextLoop = [0, 3000000];
+        $delayNextLoop = [0, 200000];
     }
 
     if (stream_select($read, $write, $except, $delayNextLoop[0], $delayNextLoop[1])) {
