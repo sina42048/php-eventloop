@@ -1,4 +1,4 @@
-# simple php event loop ( select system call )
+# simple php event loop ( select system call / non blocking io)
 
 **first start the server**
 ```php
