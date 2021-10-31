@@ -7,8 +7,9 @@ writeFileAsync("test.txt", "hello from test.txt file", function ($data) {
 });
 
 setTimeout(function () {
-    readFileAsync("test.txt", function ($data) {
-        echo "*** FILE READ *** => " . $data . PHP_EOL;
+    readFileAsync("hugeFile.dae", function ($data) {
+        echo  "read";
+        //echo "*** FILE READ *** => " . $data . PHP_EOL;
     });
 }, 2000);
 
@@ -26,7 +27,7 @@ while (true) {
     $read = $connections;
     $read[] = $socket;
     $write = $write_holder;
-    foreach ($pipes_holder as $pipe) {
+    foreach ($pipes_holder as &$pipe) {
         $read[] = $pipe['resource'];
     }
 
@@ -63,7 +64,7 @@ while (true) {
     }
 
     if (stream_select($read, $write, $except, $delayNextLoop[0], $delayNextLoop[1])) {
-        foreach ($write as $w) {
+        foreach ($write as &$w) {
             $peer = stream_socket_get_name($w, true);
             foreach ($messageQueue as $k => &$messages) {
                 foreach ($messages as $key => &$msg) {
@@ -81,15 +82,17 @@ while (true) {
             }
         }
 
-        foreach ($read as $r) {
+        foreach ($read as &$r) {
             if (array_key_exists((int)$r, $pipes_holder)) {
                 if (feof($r)) {
                     call_user_func($pipes_holder[(int)$r]['callback'], $pipes_holder[(int)$r]['data']);
+                    $pipes_holder[(int)$r]['data'] = '';
                     pclose($pipes_holder[(int)$r]['resource']);
                     unset($pipes_holder[(int)$r]);
                 } else {
-                    $content = stream_get_contents($r,  16384 * 16384);
-                    $pipes_holder[(int)$r]['data'] = $pipes_holder[(int)$r]['data'] . $content;
+                    $content = stream_get_contents($r,  2048 * 4096);
+                    $pipes_holder[(int)$r]['data'] .= $content;
+                    $content = '';
                 }
             } else {
                 if ($c = @stream_socket_accept($r, 0, $peer)) {
