@@ -16,6 +16,7 @@ $socket = stream_socket_server("tcp://0.0.0.0:8080", $errno, $errstr, STREAM_SER
 stream_set_blocking($socket, false);
 
 $connections = [];
+$write_holder = [];
 $read = [];
 $write = [];
 $except = null;
@@ -24,6 +25,7 @@ $messageQueue = [];
 while (true) {
     $read = $connections;
     $read[] = $socket;
+    $write = $write_holder;
     foreach ($pipes_holder as $pipe) {
         $read[] = $pipe['resource'];
     }
@@ -69,7 +71,7 @@ while (true) {
                     if ($written === strlen($msg)) {
                         unset($messageQueue[$peer][$key]);
                         if (empty($messageQueue[$peer])) {
-                            unset($write[$peer]);
+                            unset($write_holder[$peer]);
                             unset($messageQueue[$peer]);
                         }
                     } else {
@@ -86,22 +88,22 @@ while (true) {
                     pclose($pipes_holder[(int)$r]['resource']);
                     unset($pipes_holder[(int)$r]);
                 } else {
-                    $content = fread($r, 1024);
-                    $pipes_holder[(int)$r]['data'] = $pipes_holder[(int)$r]['data'] . $content;
+                    $content = stream_get_contents($r);
+                    $pipes_holder[(int)$r]['data'] = $content;
                 }
             } else {
                 if ($c = @stream_socket_accept($r, 0, $peer)) {
                     stream_set_blocking($c, 0);
                     $connections[$peer] = $c;
                     echo $peer . ' Connected' . PHP_EOL;
-                    $write[$peer]  = $connections[$peer];
+                    $write_holder[$peer] = $connections[$peer];
                     $messageQueue[$peer][] = "Hello user " . $peer;
                 } else {
                     $peer = stream_socket_get_name($r, true);
                     if (feof($r)) {
                         echo 'Connection closed ' . $peer . PHP_EOL;
                         unset($connections[$peer]);
-                        unset($write[$peer]);
+                        unset($write_holder[$peer]);
                         unset($messageQueue[$peer]);
                         fclose($r);
                     } else {
@@ -109,7 +111,7 @@ while (true) {
                         if ($contents) {
                             echo "Client $peer said $contents" . PHP_EOL;
                             $messageQueue[$peer][] = "$contents recieved ! :D";
-                            $write[$peer]  = $connections[$peer];
+                            $write_holder[$peer] = $connections[$peer];
                         }
                     }
                 }

@@ -6,11 +6,12 @@ if (!$fp) {
     echo "$errstr ($errno)<br />\n";
 } else {
     while (true) {
-        if ($c = fgets($fp, 1024)) {
+        if ($c = fread($fp, 1024)) {
             echo $c . PHP_EOL;
             echo 'say something : ';
             $message = readline();
             fwrite($fp, $message);
         }
+        usleep(10000);
     }
 }
