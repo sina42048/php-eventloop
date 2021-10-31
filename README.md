@@ -1,5 +1,8 @@
 # simple php event loop ( select system call / non blocking io)
 
+```
+*** SOCKET EXTENSION SHOULD BE ENABLED IN PHP.INI FILE ***
+```
 **first start the server**
 ```php
 php server.php
