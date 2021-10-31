@@ -1,5 +1,16 @@
 <?php
 require_once './timers.php';
+require_once './proc.php';
+
+writeFileAsync("test.txt", "hello from test.txt file", function ($data) {
+    echo "*** FILE WRITE *** => " . $data . PHP_EOL;
+});
+
+setTimeout(function () {
+    readFileAsync("test.txt", function ($data) {
+        echo "*** FILE READ *** => " . $data . PHP_EOL;
+    });
+}, 2000);
 
 $socket = stream_socket_server("tcp://0.0.0.0:8080", $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN);
 stream_set_blocking($socket, false);
@@ -13,6 +24,9 @@ $messageQueue = [];
 while (true) {
     $read = $connections;
     $read[] = $socket;
+    foreach ($pipes_holder as $pipe) {
+        $read[] = $pipe['resource'];
+    }
 
     $currentTime = hrtime(true);
     $delayNextLoop = null;
@@ -66,26 +80,37 @@ while (true) {
         }
 
         foreach ($read as $r) {
-            if ($c = @stream_socket_accept($r, 0, $peer)) {
-                stream_set_blocking($c, 0);
-                $connections[$peer] = $c;
-                echo $peer . ' Connected' . PHP_EOL;
-                $write[$peer]  = $connections[$peer];
-                $messageQueue[$peer][] = "Hello user " . $peer;
-            } else {
-                $peer = stream_socket_get_name($r, true);
+            if (array_key_exists((int)$r, $pipes_holder)) {
                 if (feof($r)) {
-                    echo 'Connection closed ' . $peer . PHP_EOL;
-                    unset($connections[$peer]);
-                    unset($write[$peer]);
-                    unset($messageQueue[$peer]);
-                    fclose($r);
+                    call_user_func($pipes_holder[(int)$r]['callback'], $pipes_holder[(int)$r]['data']);
+                    pclose($pipes_holder[(int)$r]['resource']);
+                    unset($pipes_holder[(int)$r]);
                 } else {
-                    $contents = fread($r, 1024);
-                    if ($contents) {
-                        echo "Client $peer said $contents" . PHP_EOL;
-                        $messageQueue[$peer][] = "$contents recieved ! :D";
-                        $write[$peer]  = $connections[$peer];
+                    $content = fread($r, 1024);
+                    $pipes_holder[(int)$r]['data'] = $pipes_holder[(int)$r]['data'] . $content;
+                }
+            } else {
+                if ($c = @stream_socket_accept($r, 0, $peer)) {
+                    stream_set_blocking($c, 0);
+                    $connections[$peer] = $c;
+                    echo $peer . ' Connected' . PHP_EOL;
+                    $write[$peer]  = $connections[$peer];
+                    $messageQueue[$peer][] = "Hello user " . $peer;
+                } else {
+                    $peer = stream_socket_get_name($r, true);
+                    if (feof($r)) {
+                        echo 'Connection closed ' . $peer . PHP_EOL;
+                        unset($connections[$peer]);
+                        unset($write[$peer]);
+                        unset($messageQueue[$peer]);
+                        fclose($r);
+                    } else {
+                        $contents = fread($r, 1024);
+                        if ($contents) {
+                            echo "Client $peer said $contents" . PHP_EOL;
+                            $messageQueue[$peer][] = "$contents recieved ! :D";
+                            $write[$peer]  = $connections[$peer];
+                        }
                     }
                 }
             }
