@@ -13,3 +13,5 @@ php client.php
     setTimeout
     setImmediate
     tcp/ip server
+    async file write
+    async file read
