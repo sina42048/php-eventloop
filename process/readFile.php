@@ -1,5 +1,6 @@
 <?php
-
+stream_set_blocking(STDOUT, false);
 $myfile = fopen($argv[1], "r");
-echo fread($myfile, filesize($argv[1]));
+$data = fread($myfile, filesize($argv[1]));
+fwrite(STDOUT, $data);
 fclose($myfile);
