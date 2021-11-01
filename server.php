@@ -1,13 +1,13 @@
 <?php
-require_once './timers.php';
-require_once './proc.php';
+require_once './timers/timers.php';
+require_once './process/proc.php';
 
 writeFileAsync("test.txt", "hello from test.txt file", function ($data) {
     echo "*** FILE WRITE *** => " . $data . PHP_EOL;
 });
 
 setTimeout(function () {
-    readFileAsync("hugeFile.dae", function ($data) {
+    readFileAsync("test.txt", function ($data) {
         echo "*** FILE READ *** => " . $data . PHP_EOL;
     });
 }, 2000);
