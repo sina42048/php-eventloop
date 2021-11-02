@@ -1,14 +1,14 @@
 <?php
 require_once './timers/timers.php';
-require_once './process/proc.php';
+require_once './process/File.php';
 
-writeFileAsync("test.txt", "hello from test.txt file", function ($data) {
-    echo "*** FILE WRITE *** => " . $data . PHP_EOL;
+File::writeFileAsync("test.txt", "hello from test.txt file")->then(function ($data) {
+    echo $data . PHP_EOL;
 });
 
 setTimeout(function () {
-    readFileAsync("test.txt", function ($data) {
-        //echo "*** FILE READ *** => " . $data . PHP_EOL;
+    File::readFileAsync("test.txt")->then(function ($data) {
+        echo $data . PHP_EOL;
     });
 }, 2000);
 
@@ -22,11 +22,12 @@ $write = [];
 $except = null;
 $messageQueue = [];
 
+
 while (true) {
     $read = $connections;
     $read[] = $socket;
     $write = $write_holder;
-    foreach ($pipes_holder as &$pipe) {
+    foreach (File::$pipes_holder as &$pipe) {
         $read[] = $pipe['resource'];
     }
 
@@ -82,14 +83,14 @@ while (true) {
         }
 
         foreach ($read as &$r) {
-            if (array_key_exists((int)$r, $pipes_holder)) {
+            if (array_key_exists((int)$r, File::$pipes_holder)) {
                 if (feof($r)) {
-                    call_user_func($pipes_holder[(int)$r]['callback'], $pipes_holder[(int)$r]['data']);
+                    call_user_func(File::$pipes_holder[(int)$r]['resolve'], File::$pipes_holder[(int)$r]['data']);
                     $pipes_holder[(int)$r]['data'] = '';
-                    pclose($pipes_holder[(int)$r]['resource']);
-                    unset($pipes_holder[(int)$r]);
+                    pclose(File::$pipes_holder[(int)$r]['resource']);
+                    unset(File::$pipes_holder[(int)$r]);
                 } else {
-                    $pipes_holder[(int)$r]['data'] .= stream_get_contents($r);
+                    File::$pipes_holder[(int)$r]['data'] .= stream_get_contents($r);
                 }
             } else {
                 if ($c = @stream_socket_accept($r, 0, $peer)) {
