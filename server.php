@@ -1,16 +1,34 @@
 <?php
-require_once './timers/timers.php';
+require_once './timers/Timer.php';
 require_once './process/File.php';
+
+$timeout = Timer::setTimeout(function () use (&$timeout) {
+    echo "Hello after 1 second !" . PHP_EOL;
+    Timer::clearTimeout($timeout);
+}, 1000);
+
+$interval = Timer::setInterval(function () {
+    echo "Tick Tock" . PHP_EOL;
+}, 1000);
+
 
 File::writeFileAsync("test.txt", "hello from test.txt file")->then(function ($data) {
     echo $data . PHP_EOL;
 });
 
-setTimeout(function () {
-    File::readFileAsync("test.txt")->then(function ($data) {
+Timer::setTimeout(function () use ($interval) {
+    File::readFileAsync("test.txt")->then(function ($data) use ($interval) {
         echo $data . PHP_EOL;
+        Timer::setImmediate(function () {
+            echo "i will happen end of loop when file read complete !" . PHP_EOL;
+        });
+        // interval now cleared !
+        Timer::clearInterval($interval);
+        Timer::setInterval(function () {
+            echo "Replaced interval" . PHP_EOL;
+        }, 1000);
     });
-}, 2000);
+}, 4000);
 
 $socket = stream_socket_server("tcp://0.0.0.0:8080", $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN);
 stream_set_blocking($socket, false);
@@ -33,7 +51,7 @@ while (true) {
 
     $currentTime = hrtime(true);
     $delayNextLoop = null;
-    foreach ($timers as $key => &$timer) {
+    foreach (Timer::$timers as $key => &$timer) {
         if ($timer['happend'] === false) {
             if ($delayNextLoop === null) {
                 $delayNextLoop = $timer['time'] - $currentTime < 0 ? 0 : $timer['time'] - $currentTime;
@@ -120,8 +138,8 @@ while (true) {
         }
     }
 
-    foreach ($futureTicks as $key => &$future) {
+    foreach (Timer::$futureTicks as $key => &$future) {
         call_user_func($future['callback']);
-        unset($futureTicks[$key]);
+        unset(Timer::$futureTicks[$key]);
     }
 }
