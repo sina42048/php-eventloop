@@ -7,8 +7,8 @@ writeFileAsync("test.txt", "hello from test.txt file", function ($data) {
 });
 
 setTimeout(function () {
-    readFileAsync("test.txt", function ($data) {
-        echo "*** FILE READ *** => " . $data . PHP_EOL;
+    readFileAsync("hugeFile.txt", function ($data) {
+        //echo "*** FILE READ *** => " . $data . PHP_EOL;
     });
 }, 2000);
 
@@ -89,7 +89,7 @@ while (true) {
                     pclose($pipes_holder[(int)$r]['resource']);
                     unset($pipes_holder[(int)$r]);
                 } else {
-                    $pipes_holder[(int)$r]['data'] .= stream_get_contents($r,  1024 * 1024);
+                    $pipes_holder[(int)$r]['data'] .= stream_get_contents($r);
                 }
             } else {
                 if ($c = @stream_socket_accept($r, 0, $peer)) {
