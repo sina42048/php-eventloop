@@ -10,6 +10,7 @@ if (!$fp) {
             echo $c . PHP_EOL;
             echo 'say something : ';
             $message = readline();
+            $message = $message ? $message : 'empty';
             fwrite($fp, $message);
         }
         usleep(10000);
