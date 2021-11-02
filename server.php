@@ -7,7 +7,7 @@ writeFileAsync("test.txt", "hello from test.txt file", function ($data) {
 });
 
 setTimeout(function () {
-    readFileAsync("hugeFile.txt", function ($data) {
+    readFileAsync("test.txt", function ($data) {
         //echo "*** FILE READ *** => " . $data . PHP_EOL;
     });
 }, 2000);
