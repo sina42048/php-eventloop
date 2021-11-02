@@ -89,7 +89,7 @@ while (true) {
                     pclose($pipes_holder[(int)$r]['resource']);
                     unset($pipes_holder[(int)$r]);
                 } else {
-                    $pipes_holder[(int)$r]['data'] .= stream_get_contents($r,  2048 * 4096);
+                    $pipes_holder[(int)$r]['data'] .= stream_get_contents($r,  1024 * 1024);
                 }
             } else {
                 if ($c = @stream_socket_accept($r, 0, $peer)) {
