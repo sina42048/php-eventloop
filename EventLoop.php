@@ -1,6 +1,7 @@
 <?php
 require_once './timers/Timer.php';
 require_once './process/File.php';
+require_once './promise/Promise.php';
 
 class EventLoop
 {
@@ -12,13 +13,14 @@ class EventLoop
     private $except = null;
     private $messageQueue = [];
 
-    public function createServer($ipAddress, $callback)
+    public function createServer($ipAddress)
     {
-        $this->socket = stream_socket_server($ipAddress, $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN);
-        if ($this->socket) {
-            call_user_func($callback, $ipAddress);
-        }
+        $promise = new Promise(function ($resolve) use ($ipAddress) {
+            $this->socket = stream_socket_server($ipAddress, $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN);
+            $resolve($ipAddress);
+        });
         stream_set_blocking($this->socket, false);
+        return $promise;
     }
 
     public function setTimeout($callback, $delay)

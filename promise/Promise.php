@@ -17,8 +17,10 @@ class Promise
         $this->thenCallback = $then;
     }
 
-    public function resolve($content)
+    public function resolve($content = null)
     {
-        call_user_func($this->thenCallback, $content);
+        Timer::setTimeout(function () use ($content) {
+            call_user_func($this->thenCallback, $content);
+        }, 0);
     }
 }
