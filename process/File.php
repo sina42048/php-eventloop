@@ -1,5 +1,4 @@
 <?php
-include './promise/Promise.php';
 
 class File
 {
