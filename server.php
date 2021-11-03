@@ -23,6 +23,8 @@ $interval = $loop->setInterval(function () {
 
 $loop->writeFileAsync("test.txt", "hello from test.txt file")->then(function ($data) {
     echo $data . PHP_EOL;
+})->catch(function ($error) {
+    echo $error . PHP_EOL;
 });
 
 $loop->setTimeout(function () use ($interval, &$loop) {
@@ -36,11 +38,15 @@ $loop->setTimeout(function () use ($interval, &$loop) {
         $loop->setInterval(function () {
             echo "Replaced interval" . PHP_EOL;
         }, 1000);
+    })->catch(function ($error) {
+        echo $error . PHP_EOL;
     });
 }, 4000);
 
 $loop->createServer("tcp://127.0.0.1:8080")->then(function ($ip) {
     echo 'Server Started at port : ' . $ip . PHP_EOL;
+})->catch(function ($error) {
+    echo $error;
 });
 
 $loop->run();

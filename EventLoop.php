@@ -15,9 +15,13 @@ class EventLoop
 
     public function createServer($ipAddress)
     {
-        $promise = new Promise(function ($resolve) use ($ipAddress) {
+        $promise = new Promise(function ($resolve, $reject) use ($ipAddress) {
             $this->socket = stream_socket_server($ipAddress, $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN);
-            $resolve($ipAddress);
+            if ($this->socket) {
+                $resolve($ipAddress);
+            } else {
+                $reject("failed to open server");
+            }
             stream_set_blocking($this->socket, false);
         });
         return $promise;
@@ -122,7 +126,13 @@ class EventLoop
                 foreach ($this->read as &$r) {
                     if (array_key_exists((int)$r, File::$pipes_holder)) {
                         if (feof($r)) {
-                            call_user_func(File::$pipes_holder[(int)$r]['resolve'], File::$pipes_holder[(int)$r]['data']);
+                            if (File::$pipes_holder[(int)$r]['data'] === '-1') {
+                                call_user_func(File::$pipes_holder[(int)$r]['reject'], 'file not found');
+                            } else if (File::$pipes_holder[(int)$r]['data'] === '-2') {
+                                call_user_func(File::$pipes_holder[(int)$r]['reject'], 'write file failed');
+                            } else {
+                                call_user_func(File::$pipes_holder[(int)$r]['resolve'], File::$pipes_holder[(int)$r]['data']);
+                            }
                             File::$pipes_holder[(int)$r]['data'] = '';
                             pclose(File::$pipes_holder[(int)$r]['resource']);
                             unset(File::$pipes_holder[(int)$r]);

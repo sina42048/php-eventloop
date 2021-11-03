@@ -13,9 +13,16 @@ class File
             'data' => null
         ];
 
-        $promise = new Promise(function ($resolve) use ($process) {
-            self::$pipes_holder[(int)$process]['resolve'] = $resolve;
+        $promise = new Promise(function ($resolve, $reject) use ($process) {
+            if ($process) {
+                self::$pipes_holder[(int)$process]['resolve'] = $resolve;
+                self::$pipes_holder[(int)$process]['reject'] = $reject;
+            } else {
+                $reject("popen error");
+                unset(self::$pipes_holder[(int)$process]);
+            }
         });
+
 
         return $promise;
     }
@@ -29,8 +36,14 @@ class File
             'data' => null
         ];
 
-        $promise = new Promise(function ($resolve) use ($process) {
-            self::$pipes_holder[(int)$process]['resolve'] = $resolve;
+        $promise = new Promise(function ($resolve, $reject) use ($process) {
+            if ($process) {
+                self::$pipes_holder[(int)$process]['resolve'] = $resolve;
+                self::$pipes_holder[(int)$process]['reject'] = $reject;
+            } else {
+                $reject("popen error");
+                unset(self::$pipes_holder[(int)$process]);
+            }
         });
 
         return $promise;
