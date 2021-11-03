@@ -1,7 +1,8 @@
 <?php
-require_once './timers/Timer.php';
-require_once './process/File.php';
+require_once './timer/Timer.php';
 require_once './promise/Promise.php';
+require_once './process/File.php';
+require_once './async_await/Async.php';
 
 class EventLoop
 {
