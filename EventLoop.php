@@ -18,8 +18,8 @@ class EventLoop
         $promise = new Promise(function ($resolve) use ($ipAddress) {
             $this->socket = stream_socket_server($ipAddress, $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN);
             $resolve($ipAddress);
+            stream_set_blocking($this->socket, false);
         });
-        stream_set_blocking($this->socket, false);
         return $promise;
     }
 
