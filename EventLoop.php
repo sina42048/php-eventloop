@@ -12,9 +12,12 @@ class EventLoop
     private $except = null;
     private $messageQueue = [];
 
-    public function createServer($ipAddress)
+    public function createServer($ipAddress, $callback)
     {
         $this->socket = stream_socket_server($ipAddress, $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN);
+        if ($this->socket) {
+            call_user_func($callback, $ipAddress);
+        }
         stream_set_blocking($this->socket, false);
     }
 

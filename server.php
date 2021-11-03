@@ -31,6 +31,8 @@ $loop->setTimeout(function () use ($interval, &$loop) {
     });
 }, 4000);
 
-$loop->createServer("tcp://0.0.0.0:8080");
+$loop->createServer("tcp://0.0.0.0:8080", function () {
+    echo 'Server Started at port 8080' . PHP_EOL;
+});
 
 $loop->run();
