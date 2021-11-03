@@ -1,6 +1,5 @@
 <?php
 require_once './EventLoop.php';
-require_once './promise/Promise.php';
 
 $loop = new EventLoop();
 
@@ -47,6 +46,14 @@ $loop->createServer("tcp://127.0.0.1:8080")->then(function ($ip) {
     echo 'Server Started at port : ' . $ip . PHP_EOL;
 })->catch(function ($error) {
     echo $error;
+});
+
+// async await style
+Async::run(function () {
+    yield Async::delay(2000);
+    echo 'async/await style after two second' . PHP_EOL;
+    yield Async::delay(3000);
+    echo 'async/await style after five second' . PHP_EOL;
 });
 
 $loop->run();
