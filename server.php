@@ -1,7 +1,15 @@
 <?php
 require_once './EventLoop.php';
+require_once './promise/Promise.php';
 
 $loop = new EventLoop();
+
+// promise based timer example
+$promiseTimeout = (new Promise(function ($resolve) use ($loop) {
+    $loop->setTimeout($resolve, 1000);
+}))->then(function () {
+    echo 'Promise based Timer ' . PHP_EOL;
+});
 
 $timeout = $loop->setTimeout(function () use (&$timeout, &$loop) {
     echo "Hello after 1 second !" . PHP_EOL;
