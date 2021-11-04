@@ -24,18 +24,22 @@ class Async
 
     private static function runGenerator()
     {
-        if (self::$generator->current() !== null) {
-            if (self::$generator->current() instanceof Promise) {
-                self::$generator->current()->then(function ($content = null) {
-                    self::$generator->send($content);
+        try {
+            echo self::$generator->getReturn();
+        } catch (Exception $err) {
+            if (self::$generator->current() !== null) {
+                if (self::$generator->current() instanceof Promise) {
+                    self::$generator->current()->then(function ($content = null) {
+                        self::$generator->send($content);
+                        self::runGenerator(self::$generator);
+                    })->catch(function ($error) {
+                        self::$generator->throw(new Error($error));
+                        self::runGenerator(self::$generator);
+                    });
+                } else {
+                    self::$generator->next();
                     self::runGenerator(self::$generator);
-                })->catch(function ($error) {
-                    self::$generator->throw(new Error($error));
-                    self::runGenerator(self::$generator);
-                });
-            } else {
-                self::$generator->next();
-                self::runGenerator(self::$generator);
+                }
             }
         }
     }

@@ -63,7 +63,7 @@ Async::run(function () use ($loop) {
         echo $err->getMessage() . " async / await " . PHP_EOL;
     }
     yield Async::delay(5000);
-    echo 'async/await style final delay' . PHP_EOL;
+    return 'async/await style final delay' . PHP_EOL;
 });
 
 $loop->run();
