@@ -48,12 +48,22 @@ $loop->createServer("tcp://127.0.0.1:8080")->then(function ($ip) {
     echo $error;
 });
 
-// async await style
-Async::run(function () {
+//async await style
+Async::run(function () use ($loop) {
     yield Async::delay(2000);
     echo 'async/await style after two second' . PHP_EOL;
     yield Async::delay(3000);
     echo 'async/await style after five second' . PHP_EOL;
+    try {
+        $writeFile = yield $loop->writeFileAsync("test.txt", "hello from async/await");
+        echo $writeFile . " async / await" . PHP_EOL;
+        $readFile = yield $loop->readFileAsync("notExist.txt"); // will be thrown an error
+        echo $readFile . " => async / await" . PHP_EOL; //  not being executed
+    } catch (Error $err) {
+        echo $err->getMessage() . " async / await " . PHP_EOL;
+    }
+    yield Async::delay(5000);
+    echo 'async/await style final delay' . PHP_EOL;
 });
 
 $loop->run();
