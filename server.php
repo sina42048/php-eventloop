@@ -17,7 +17,7 @@ $timeout = $loop->setTimeout(function () use (&$timeout, &$loop) {
 
 $interval = $loop->setInterval(function () {
     echo "Tick Tock" . PHP_EOL;
-}, 1000);
+}, 200);
 
 
 $loop->writeFileAsync("test.txt", str_repeat("Hello", 400000000))->then(function ($data) {
@@ -28,7 +28,7 @@ $loop->writeFileAsync("test.txt", str_repeat("Hello", 400000000))->then(function
 
 $loop->setTimeout(function () use ($interval, &$loop) {
     $loop->readFileAsync("test.txt")->then(function ($data) use ($interval, &$loop) {
-        echo 'readed';
+        echo $data . PHP_EOL;
         $loop->setImmediate(function () {
             echo "i will happen end of loop when file read complete !" . PHP_EOL;
         });
@@ -55,8 +55,6 @@ Async::run(function () use ($loop) {
     yield Async::delay(3000);
     echo 'async/await style after five second' . PHP_EOL;
     try {
-        $writeFile = yield $loop->writeFileAsync("test.txt", "hello from async/await");
-        echo $writeFile . " async / await" . PHP_EOL;
         $readFile = yield $loop->readFileAsync("notExist.txt"); // will be thrown an error
         echo $readFile . " => async / await" . PHP_EOL; //  not being executed
     } catch (Error $err) {

@@ -39,7 +39,9 @@ class File
             // parent
             usleep(15);
             $pipe = fopen($pipe_name, "r");
-
+            stream_set_blocking($pipe, false);
+            
+            echo 'parent';
             self::$pipes_holder[(int)$pipe] = [
                 'resource' => $pipe,
                 'callback' => $callback,
@@ -53,7 +55,6 @@ class File
     {
         $pipe_name = "/tmp/pipe" . rand();
         posix_mkfifo($pipe_name, 0644);
-
 
         $pid = pcntl_fork();
 
@@ -75,6 +76,7 @@ class File
             // parent
             usleep(15);
             $pipe = fopen($pipe_name, "r");
+            stream_set_blocking($pipe, false);
 
             self::$pipes_holder[(int)$pipe] = [
                 'resource' => $pipe,
