@@ -67,7 +67,9 @@ class EventLoop
     {
         while (true) {
             $this->read = $this->connections;
-            $this->read[] = $this->socket;
+            if ($this->socket) {
+                $this->read[] = $this->socket;
+            }
             $this->write = $this->write_holder;
             foreach (File::$pipes_holder as &$pipe) {
                 $this->read[] = $pipe['resource'];
@@ -104,63 +106,66 @@ class EventLoop
             } else {
                 $delayNextLoop = [0, 200000];
             }
-
-            if (stream_select($this->read, $this->write, $this->except, $delayNextLoop[0], $delayNextLoop[1])) {
-                foreach ($this->write as &$w) {
-                    $peer = stream_socket_get_name($w, true);
-                    foreach ($this->messageQueue as &$messages) {
-                        foreach ($messages as $key => &$msg) {
-                            $written = fwrite($w, $msg);
-                            if ($written === strlen($msg)) {
-                                unset($this->messageQueue[$peer][$key]);
-                                if (empty($this->messageQueue[$peer])) {
-                                    unset($this->write_holder[$peer]);
-                                    unset($this->messageQueue[$peer]);
+            if ($this->read || $this->write) {
+                if (stream_select($this->read, $this->write, $this->except, $delayNextLoop[0], $delayNextLoop[1])) {
+                    foreach ($this->write as &$w) {
+                        $peer = stream_socket_get_name($w, true);
+                        foreach ($this->messageQueue as &$messages) {
+                            foreach ($messages as $key => &$msg) {
+                                $written = fwrite($w, $msg);
+                                if ($written === strlen($msg)) {
+                                    unset($this->messageQueue[$peer][$key]);
+                                    if (empty($this->messageQueue[$peer])) {
+                                        unset($this->write_holder[$peer]);
+                                        unset($this->messageQueue[$peer]);
+                                    }
+                                } else {
+                                    $this->messageQueue[$peer][$key] = substr($msg, $written);
                                 }
-                            } else {
-                                $this->messageQueue[$peer][$key] = substr($msg, $written);
                             }
                         }
                     }
-                }
 
-                foreach ($this->read as &$r) {
-                    if (array_key_exists((int)$r, File::$pipes_holder)) {
-                        if (feof($r)) {
-                            if (File::$pipes_holder[(int)$r]['data'] === '-1') {
-                                call_user_func(File::$pipes_holder[(int)$r]['reject'], 'file not found');
-                            } else if (File::$pipes_holder[(int)$r]['data'] === '-2') {
-                                call_user_func(File::$pipes_holder[(int)$r]['reject'], 'write file failed');
-                            } else {
-                                call_user_func(File::$pipes_holder[(int)$r]['resolve'], File::$pipes_holder[(int)$r]['data']);
-                            }
-                            File::$pipes_holder[(int)$r]['data'] = '';
-                            pclose(File::$pipes_holder[(int)$r]['resource']);
-                            unset(File::$pipes_holder[(int)$r]);
-                        } else {
-                            File::$pipes_holder[(int)$r]['data'] .= stream_get_contents($r, 64 * 64);
-                        }
-                    } else {
-                        if ($c = @stream_socket_accept($r, 0, $peer)) {
-                            stream_set_blocking($c, 0);
-                            $this->connections[$peer] = $c;
-                            echo $peer . ' Connected' . PHP_EOL;
-                            $this->write_holder[$peer] = $this->connections[$peer];
-                            $this->messageQueue[$peer][] = "Hello user " . $peer;
-                        } else {
-                            $peer = stream_socket_get_name($r, true);
+                    foreach ($this->read as &$r) {
+                        if (array_key_exists((int)$r, File::$pipes_holder)) {
                             if (feof($r)) {
-                                echo 'Connection closed ' . $peer . PHP_EOL;
-                                unset($this->connections[$peer]);
-                                unset($this->write_holder[$peer]);
-                                unset($this->messageQueue[$peer]);
-                                fclose($r);
+                                if (File::$pipes_holder[(int)$r]['data'] === 'ERR_NOT_FOUND') {
+                                    call_user_func(File::$pipes_holder[(int)$r]['err'], "file not found.");
+                                } else if (File::$pipes_holder[(int)$r]['data'] === 'WRITE_SUCCESS') {
+                                    call_user_func(File::$pipes_holder[(int)$r]['callback'], "file write success");
+                                } else {
+                                    call_user_func(File::$pipes_holder[(int)$r]['callback'], File::$pipes_holder[(int)$r]['data']);
+                                }
+                                File::$pipes_holder[(int)$r]['data'] = '';
+                                unlink(File::$pipes_holder[(int)$r]['file']);
+                                unset(File::$pipes_holder[(int)$r]);
                             } else {
-                                $contents = fread($r, 1024);
-                                if ($contents) {
-                                    echo "Client $peer said $contents" . PHP_EOL;
-                                    $this->messageQueue[$peer][] = "$contents recieved ! :D";
-                                    $this->write_holder[$peer] = $this->connections[$peer];
+                                $content = stream_get_contents($r);
+                                File::$pipes_holder[(int)$r]['data'] .= $content;
+                            }
+                        } else {
+
+                            if ($c = @stream_socket_accept($r, 0, $peer)) {
+                                stream_set_blocking($c, 0);
+                                $this->connections[$peer] = $c;
+                                echo $peer . ' Connected' . PHP_EOL;
+                                $this->write_holder[$peer] = $this->connections[$peer];
+                                $this->messageQueue[$peer][] = "Hello user " . $peer;
+                            } else {
+                                $peer = stream_socket_get_name($r, true);
+                                if (feof($r)) {
+                                    echo 'Connection closed ' . $peer . PHP_EOL;
+                                    unset($this->connections[$peer]);
+                                    unset($this->write_holder[$peer]);
+                                    unset($this->messageQueue[$peer]);
+                                    fclose($r);
+                                } else {
+                                    $contents = fread($r, 1024);
+                                    if ($contents) {
+                                        echo "Client $peer said $contents" . PHP_EOL;
+                                        $this->messageQueue[$peer][] = "$contents recieved ! :D";
+                                        $this->write_holder[$peer] = $this->connections[$peer];
+                                    }
                                 }
                             }
                         }
