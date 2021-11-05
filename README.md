@@ -3,6 +3,9 @@
 ```
 *** SOCKET EXTENSION SHOULD BE ENABLED IN PHP.INI FILE ***
 ```
+```
+*** WINDOWS IS NOT SUPPORT ***
+```
 **first start the server**
 ```php
 php server.php
