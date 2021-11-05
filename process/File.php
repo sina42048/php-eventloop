@@ -6,45 +6,84 @@ class File
 
     public static function writeFileAsync($fileName, $text)
     {
-        $process = popen("php ./process/writeFile.php $fileName \"$text\"", "r");
-        self::$pipes_holder[(int)$process] = [
-            'resource' => $process,
-            'data' => null
-        ];
-
-        $promise = new Promise(function ($resolve, $reject) use ($process) {
-            if ($process) {
-                self::$pipes_holder[(int)$process]['resolve'] = $resolve;
-                self::$pipes_holder[(int)$process]['reject'] = $reject;
-            } else {
-                $reject("popen error");
-                unset(self::$pipes_holder[(int)$process]);
-            }
+        return new Promise(function ($resolve, $reject) use ($fileName, $text) {
+            self::write($fileName, $text, $resolve);
         });
-
-
-        return $promise;
     }
 
     public static function readFileAsync($fileName)
     {
-        $process = popen("php ./process/readFile.php $fileName", "r");
-
-        self::$pipes_holder[(int)$process] = [
-            'resource' => $process,
-            'data' => null
-        ];
-
-        $promise = new Promise(function ($resolve, $reject) use ($process) {
-            if ($process) {
-                self::$pipes_holder[(int)$process]['resolve'] = $resolve;
-                self::$pipes_holder[(int)$process]['reject'] = $reject;
-            } else {
-                $reject("popen error");
-                unset(self::$pipes_holder[(int)$process]);
-            }
+        return new Promise(function ($resolve, $reject) use ($fileName) {
+            self::read($fileName, $resolve, $reject);
         });
+    }
 
-        return $promise;
+    private static function write($fileName, $text, $callback)
+    {
+        $pipe_name = "/tmp/pipe" . rand();
+        posix_mkfifo($pipe_name, 0644);
+
+        $pid = pcntl_fork();
+
+        if ($pid < 0) {
+            echo 'error';
+        } else if ($pid === 0) {
+            // child
+            error_reporting(0);
+            
+            $pipe = fopen($pipe_name, "w");
+            $file = fopen($fileName, "w");
+            fwrite($file, $text);
+            fwrite($pipe, "WRITE_SUCCESS");
+            exit(0);
+        } else {
+            // parent
+            usleep(15);
+            $pipe = fopen($pipe_name, "r");
+
+            self::$pipes_holder[(int)$pipe] = [
+                'resource' => $pipe,
+                'callback' => $callback,
+                'file' => $pipe_name,
+                'data' => null
+            ];
+        }
+    }
+
+    private static function read($fileName, $callback, $err)
+    {
+        $pipe_name = "/tmp/pipe" . rand();
+        posix_mkfifo($pipe_name, 0644);
+
+
+        $pid = pcntl_fork();
+
+        if ($pid < 0) {
+            echo 'error';
+        } else if ($pid === 0) {
+            // child
+            error_reporting(0);
+
+            $content = file_get_contents($fileName);
+            $pipe = fopen($pipe_name, "w");
+            if ($content) {
+                fwrite($pipe, $content);
+            } else {
+                fwrite($pipe, 'ERR_NOT_FOUND');
+            }
+            exit(0);
+        } else {
+            // parent
+            usleep(15);
+            $pipe = fopen($pipe_name, "r");
+
+            self::$pipes_holder[(int)$pipe] = [
+                'resource' => $pipe,
+                'callback' => $callback,
+                'file' => $pipe_name,
+                'err' => $err,
+                'data' => null
+            ];
+        }
     }
 }
