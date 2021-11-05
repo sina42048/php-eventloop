@@ -30,7 +30,6 @@ class File
         } else if ($pid === 0) {
             // child
             error_reporting(0);
-            
             $pipe = fopen($pipe_name, "w");
             $file = fopen($fileName, "w");
             fwrite($file, $text);
@@ -64,8 +63,8 @@ class File
             // child
             error_reporting(0);
 
-            $content = file_get_contents($fileName);
             $pipe = fopen($pipe_name, "w");
+            $content = file_get_contents($fileName);
             if ($content) {
                 fwrite($pipe, $content);
             } else {

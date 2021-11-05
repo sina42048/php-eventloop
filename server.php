@@ -20,7 +20,7 @@ $interval = $loop->setInterval(function () {
 }, 1000);
 
 
-$loop->writeFileAsync("test.txt", "hello from test.txt file")->then(function ($data) {
+$loop->writeFileAsync("test.txt", str_repeat("Hello", 400000000))->then(function ($data) {
     echo $data . PHP_EOL;
 })->catch(function ($error) {
     echo $error . PHP_EOL;
@@ -28,7 +28,7 @@ $loop->writeFileAsync("test.txt", "hello from test.txt file")->then(function ($d
 
 $loop->setTimeout(function () use ($interval, &$loop) {
     $loop->readFileAsync("test.txt")->then(function ($data) use ($interval, &$loop) {
-        echo $data . PHP_EOL;
+        echo 'readed';
         $loop->setImmediate(function () {
             echo "i will happen end of loop when file read complete !" . PHP_EOL;
         });
