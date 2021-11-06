@@ -171,6 +171,8 @@ class EventLoop
                         }
                     }
                 }
+            } else {
+                usleep(5000);
             }
 
             foreach (Timer::$futureTicks as $key => &$future) {
