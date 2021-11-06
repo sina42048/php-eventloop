@@ -17,7 +17,7 @@ $timeout = $loop->setTimeout(function () use (&$timeout, &$loop) {
 
 $interval = $loop->setInterval(function () {
     echo "Tick Tock" . PHP_EOL;
-}, 200);
+}, 500);
 
 
 $loop->writeFileAsync("test.txt", str_repeat("Hello", 400000000))->then(function ($data) {
@@ -36,7 +36,7 @@ $loop->setTimeout(function () use ($interval, &$loop) {
         $loop->clearInterval($interval);
         $loop->setInterval(function () {
             echo "Replaced interval" . PHP_EOL;
-        }, 1000);
+        }, 500);
     })->catch(function ($error) {
         echo $error . PHP_EOL;
     });
