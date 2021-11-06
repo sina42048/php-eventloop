@@ -140,7 +140,7 @@ class EventLoop
                                 unlink(File::$pipes_holder[(int)$r]['file']);
                                 unset(File::$pipes_holder[(int)$r]);
                             } else {
-                                $content = stream_get_contents($r);
+                                $content = stream_get_contents($r, 8192);
                                 File::$pipes_holder[(int)$r]['data'] .= $content;
                             }
                         } else {
