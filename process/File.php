@@ -34,14 +34,14 @@ class File
             $file = fopen($fileName, "w");
             fwrite($file, $text);
             fwrite($pipe, "WRITE_SUCCESS");
+            fclose($pipe);
             exit(0);
         } else {
             // parent
             usleep(15);
             $pipe = fopen($pipe_name, "r");
             stream_set_blocking($pipe, false);
-            
-            echo 'parent';
+
             self::$pipes_holder[(int)$pipe] = [
                 'resource' => $pipe,
                 'callback' => $callback,
@@ -65,9 +65,14 @@ class File
             error_reporting(0);
 
             $pipe = fopen($pipe_name, "w");
-            $content = file_get_contents($fileName);
-            if ($content) {
-                fwrite($pipe, $content);
+            $file = fopen($fileName, "r");
+            if ($file) {
+                while (!feof($file)) {
+                    $content = stream_get_contents($file, 8192);
+                    fwrite($pipe, $content);
+                }
+                fclose($file);
+                fclose($pipe);
             } else {
                 fwrite($pipe, 'ERR_NOT_FOUND');
             }
