@@ -4,9 +4,9 @@ class File
 {
     public static $pipes_holder = [];
 
-    public static function writeFileAsync($fileName, $text)
+    public static function writeFileAsync($fileName, &$text)
     {
-        return new Promise(function ($resolve, $reject) use ($fileName, $text) {
+        return new Promise(function ($resolve, $reject) use ($fileName, &$text) {
             self::write($fileName, $text, $resolve);
         });
     }
@@ -18,7 +18,7 @@ class File
         });
     }
 
-    private static function write($fileName, $text, $callback)
+    private static function write($fileName, &$text, $callback)
     {
         $pipe_name = "/tmp/pipe" . rand();
         posix_mkfifo($pipe_name, 0644);
@@ -35,13 +35,14 @@ class File
             fwrite($file, $text);
             fwrite($pipe, "WRITE_SUCCESS");
             fclose($pipe);
+            $text = '';
             exit(0);
         } else {
             // parent
             usleep(15);
             $pipe = fopen($pipe_name, "r");
             stream_set_blocking($pipe, false);
-
+            $text = '';
             self::$pipes_holder[(int)$pipe] = [
                 'resource' => $pipe,
                 'callback' => $callback,
