@@ -151,7 +151,7 @@ class EventLoop
                                     unlink(File::$pipes_holder[(int)$r]['file']);
                                     unset(File::$pipes_holder[(int)$r]);
                                 } else {
-                                    File::$pipes_holder[(int)$r]['data'] .= stream_get_contents($r, 4096);
+                                    File::$pipes_holder[(int)$r]['data'] .= stream_get_contents($r, 128);
                                 }
                             } else {
                                 if ($c = @stream_socket_accept($r, 0, $peer)) {

@@ -78,8 +78,8 @@ class File
                 $shm_id = shmop_open($random_number, "c", 0644, filesize($fileName));
                 $offset = 0;
                 while (!feof($file)) {
-                    shmop_write($shm_id, fread($file, 8192), $offset);
-                    $offset += 8193;
+                    shmop_write($shm_id, fread($file, 65536), $offset);
+                    $offset += 65537;
                 }
                 fwrite($pipe, "READ_SUCCESS");
                 fclose($file);
