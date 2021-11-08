@@ -9,9 +9,9 @@ class Promise
     function __construct(callable $callback)
     {
         $this->callback = $callback;
-        Timer::setTimeout(function () {
+        Timer::setImmediate(function () {
             call_user_func($this->callback, [$this, 'resolve'], [$this, 'reject']);
-        }, 0);
+        });
         return $this;
     }
 
