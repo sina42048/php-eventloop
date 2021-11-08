@@ -6,6 +6,7 @@ class File
 
     public static function writeFileAsync($fileName, &$text)
     {
+        $text = str_split($text, 8192);
         return new Promise(function ($resolve, $reject) use ($fileName, &$text) {
             self::write($fileName, $text, $resolve);
         });
@@ -20,7 +21,8 @@ class File
 
     private static function write($fileName, &$text, $callback)
     {
-        $pipe_name = "/tmp/pipe" . rand();
+        $random_number = rand(1, 10000);
+        $pipe_name = "/tmp/pipe" . $random_number;
         posix_mkfifo($pipe_name, 0644);
 
         $pid = pcntl_fork();
@@ -32,9 +34,13 @@ class File
             error_reporting(0);
             $pipe = fopen($pipe_name, "w");
             $file = fopen($fileName, "w");
-            fwrite($file, $text);
+            foreach ($text as $key => $t) {
+                fwrite($file, $t, strlen($t));
+                unset($text[$key]);
+            }
             fwrite($pipe, "WRITE_SUCCESS");
             fclose($pipe);
+            fclose($file);
             $text = '';
             exit(0);
         } else {
@@ -54,7 +60,8 @@ class File
 
     private static function read($fileName, $callback, $err)
     {
-        $pipe_name = "/tmp/pipe" . rand();
+        $random_number = rand(1, 10000);
+        $pipe_name = "/tmp/pipe" . $random_number;
         posix_mkfifo($pipe_name, 0644);
 
         $pid = pcntl_fork();
@@ -68,10 +75,13 @@ class File
             $pipe = fopen($pipe_name, "w");
             $file = fopen($fileName, "r");
             if ($file) {
+                $shm_id = shmop_open($random_number, "c", 0644, filesize($fileName));
+                $offset = 0;
                 while (!feof($file)) {
-                    $content = stream_get_contents($file, 8192);
-                    fwrite($pipe, $content);
+                    shmop_write($shm_id, fread($file, 8192), $offset);
+                    $offset += 8193;
                 }
+                fwrite($pipe, "READ_SUCCESS");
                 fclose($file);
                 fclose($pipe);
             } else {
@@ -81,11 +91,17 @@ class File
         } else {
             // parent
             usleep(15);
+            $shm_id = -1;
+            if (file_exists($fileName)) {
+                $shm_id = shmop_open($random_number, "c", 0644, filesize($fileName));
+            }
             $pipe = fopen($pipe_name, "r");
             stream_set_blocking($pipe, false);
 
             self::$pipes_holder[(int)$pipe] = [
+                'parent_pid' => getmypid(),
                 'resource' => $pipe,
+                'shm_id' => $shm_id,
                 'callback' => $callback,
                 'file' => $pipe_name,
                 'err' => $err,
