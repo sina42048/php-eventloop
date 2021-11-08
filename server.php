@@ -28,7 +28,9 @@ $loop->writeFileAsync("test.txt", str_repeat("Hello", 200000000))->then(function
 
 $loop->setTimeout(function () use ($interval, &$loop) {
     $loop->readFileAsync("test.txt")->then(function ($data) use ($interval, &$loop) {
-        echo $data . PHP_EOL;
+        echo "read success" . PHP_EOL;
+        # huge data, if u want to show on terminal then uncomment below line
+        //echo $data . PHP_EOL;
         $loop->setImmediate(function () {
             echo "i will happen end of loop when file read complete !" . PHP_EOL;
         });
