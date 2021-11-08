@@ -20,7 +20,7 @@ $interval = $loop->setInterval(function () {
 }, 500);
 
 
-$loop->writeFileAsync("test.txt", str_repeat("Hello", 400000000))->then(function ($data) {
+$loop->writeFileAsync("test.txt", str_repeat("Hello", 200000000))->then(function ($data) {
     echo $data . PHP_EOL;
 })->catch(function ($error) {
     echo $error . PHP_EOL;
