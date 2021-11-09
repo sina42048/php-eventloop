@@ -32,17 +32,24 @@ class File
         } else if ($pid === 0) {
             // child
             error_reporting(0);
+
             $pipe = fopen($pipe_name, "w");
+            $semaphore = sem_get(42048, 1, 0666, 1);
             $file = fopen($fileName, "w");
-            foreach ($text as $key => $t) {
-                fwrite($file, $t, strlen($t));
-                unset($text[$key]);
+
+            if (sem_acquire($semaphore)) {
+                flock($file, LOCK_EX);
+                foreach ($text as $key => $t) {
+                    fwrite($file, $t, strlen($t));
+                    unset($text[$key]);
+                }
+                sem_release($semaphore);
+                flock($file, LOCK_UN);
+                fwrite($pipe, "WRITE_SUCCESS");
+                fclose($file);
+                $text = '';
+                exit(0);
             }
-            fwrite($pipe, "WRITE_SUCCESS");
-            fclose($pipe);
-            fclose($file);
-            $text = '';
-            exit(0);
         } else {
             // parent
             usleep(15);
@@ -73,17 +80,25 @@ class File
             error_reporting(0);
 
             $pipe = fopen($pipe_name, "w");
-            $file = fopen($fileName, "r");
-            if ($file) {
+            if (file_exists($fileName)) {
+                $semaphore = sem_get(42050, 1, 0666, true);
                 $shm_id = shmop_open($random_number, "c", 0644, filesize($fileName));
-                $offset = 0;
-                while (!feof($file)) {
-                    shmop_write($shm_id, fread($file, 65536), $offset);
-                    $offset += 65537;
+                $file = fopen($fileName, "r");
+                if (sem_acquire($semaphore, false)) {
+                    flock($file, LOCK_EX);
+                    $offset = 0;
+                    while (true) {
+                        if (feof($file)) {
+                            break;
+                        }
+                        shmop_write($shm_id, fread($file, 65536), $offset);
+                        $offset += 65537;
+                    }
+                    flock($file, LOCK_UN);
+                    fwrite($pipe, "READ_SUCCESS");
+                    fclose($file);
+                    sem_release($semaphore);
                 }
-                fwrite($pipe, "READ_SUCCESS");
-                fclose($file);
-                fclose($pipe);
             } else {
                 fwrite($pipe, 'ERR_NOT_FOUND');
             }
