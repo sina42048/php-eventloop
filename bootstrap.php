@@ -59,11 +59,8 @@ function readProcess()
                                     $shm_id = shmop_open(42048, "c", 0644, (int)filesize($fileName));
                                     $file = fopen($fileName, "r");
                                     flock($file, LOCK_EX);
-                                    $offset = 0;
-                                    while (!feof($file)) {
-                                        shmop_write($shm_id, stream_get_contents($file), $offset);
-                                        $offset = 8193;
-                                    }
+                                    $content = stream_get_contents($file);
+                                    shmop_write($shm_id, $content, 0);
                                     fwrite($fh_main, "READ_SUCCESS_$fileName" . "_" . $randomNumber . PHP_EOL);
                                     flock($file, LOCK_UN);
                                     fclose($file);
