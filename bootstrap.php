@@ -1,10 +1,9 @@
 <?php
 error_reporting(E_ALL ^ E_WARNING);
 
-require_once './process/File.php';
+require_once './file/File.php';
 require_once './timer/Timer.php';
 require_once './promise/Promise.php';
-require_once './process/File.php';
 require_once './async_await/Async.php';
 
 function readAndWriteProcess()
