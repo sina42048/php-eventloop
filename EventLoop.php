@@ -60,29 +60,15 @@ class EventLoop
         return File::writeFileAsync($fileName, $text);
     }
 
-    private function clearSHMOP()
-    {
-        pcntl_signal(SIGQUIT, 'clearOnQuit');
-        pcntl_signal(SIGTERM, 'clearOnQuit');
-        pcntl_signal(SIGINT, 'clearOnQuit');
-    }
-
     public function run()
     {
-        $this->clearSHMOP();
+        $reader_write_pipe = fopen("/tmp/pipe", "w");
+        $reader_read_pipe = fopen("/tmp/pipe_main", "r");
 
-        $reader_write_pipe = fopen("/tmp/read", "w");
-        $reader_read_pipe = fopen("/tmp/readMain", "r");
-        $writer_write_pipe = fopen("/tmp/write", "w");
-        $writer_read_pipe = fopen("/tmp/writeMain", "r");
-        
         stream_set_blocking($reader_read_pipe, false);
-        stream_set_blocking($writer_read_pipe, false);
 
         File::$communicationPipes[(int)$reader_write_pipe] = $reader_write_pipe;
         File::$communicationPipes[(int)$reader_read_pipe] = $reader_read_pipe;
-        File::$communicationPipes[(int)$writer_write_pipe] = $writer_write_pipe;
-        File::$communicationPipes[(int)$writer_read_pipe] = $writer_read_pipe;
 
         while (true) {
             $this->read = $this->connections;
@@ -90,10 +76,9 @@ class EventLoop
                 $this->read[] = $this->socket;
             }
             $this->read[] = File::$communicationPipes[(int)$reader_read_pipe];
-            $this->read[] = File::$communicationPipes[(int)$writer_read_pipe];
             $this->write = $this->write_holder;
 
-            if (!count($this->write) || !count($this->read) || !count(Timer::$timers) || !count(Timer::$futureTicks)) {
+            if (count($this->write) || count($this->read) || count(Timer::$timers) || count(Timer::$futureTicks)) {
                 $currentTime = hrtime(true);
                 $delayNextLoop = null;
                 foreach (Timer::$timers as $key => &$timer) {
@@ -149,30 +134,27 @@ class EventLoop
 
                         foreach ($this->read as &$r) {
                             if (array_key_exists((int)$r, File::$communicationPipes)) {
-                                $message = stream_get_contents($r);
-                                $message = explode("_", $message);
-                                $randomNumber = $message[3];
-                                $message = $message[0] . "_" . $message[1];
+                                $message = fgets($r);
+                                $message = explode("_+_", $message);
+                                $randomNumber = (int)$message[3];
+                                $fileSize = isset($message[4]) ? (int)$message[4] : null;
+                                $message = trim($message[0]) . "_" . trim($message[1]);
 
                                 switch ($message) {
                                     case 'ERR_NOTFOUND':
-                                        call_user_func(File::$pipes_holder[(int)$randomNumber]['err'], "file not found.");
+                                        call_user_func(File::$operations_holder[(int)$randomNumber]['err'], "file not found.");
                                         break;
                                     case 'READ_SUCCESS':
-                                        call_user_func(File::$pipes_holder[(int)$randomNumber]['callback'], shmop_read(File::$pipes_holder[(int)$randomNumber]['shm_id'], 0, 0));
-                                        shmop_delete(File::$pipes_holder[(int)$randomNumber]['shm_id']);
-                                        shmop_close(File::$pipes_holder[(int)$randomNumber]['shm_id']);
-                                        unset(File::$pipes_holder[(int)$randomNumber]);
+                                        $shm_id = shmop_open($randomNumber, "c", 0644, $fileSize);
+                                        call_user_func(File::$operations_holder[(int)$randomNumber]['callback'], shmop_read($shm_id, 0, 0));
+                                        shmop_delete($shm_id);
+                                        shmop_close($shm_id);
+                                        unset(File::$operations_holder[(int)$randomNumber]);
                                         break;
                                     case 'WRITE_SUCCESS':
-                                        call_user_func(File::$pipes_holder[(int)$randomNumber]['callback'], "file write success");
-                                        shmop_delete(File::$pipes_holder[(int)$randomNumber]['shm_id']);
-                                        shmop_close(File::$pipes_holder[(int)$randomNumber]['shm_id']);
-                                        unset(File::$pipes_holder[(int)$randomNumber]);
+                                        call_user_func(File::$operations_holder[(int)$randomNumber]['callback'], "file write success");
+                                        unset(File::$operations_holder[(int)$randomNumber]);
                                         break;
-                                }
-
-                                if (array_key_exists($randomNumber, File::$pipes_holder)) {
                                 }
                             } else {
                                 if ($c = @stream_socket_accept($r, 0, $peer)) {

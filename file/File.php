@@ -2,7 +2,7 @@
 
 class File
 {
-    public static $pipes_holder = [];
+    public static $operations_holder = [];
     public static $communicationPipes = [];
 
     public static function writeFileAsync($fileName, &$text)
@@ -23,18 +23,10 @@ class File
     {
         $random_number = rand(1, 100000);
         $writer = array_slice(self::$communicationPipes, 0, 1);
-        $message = "READ_REQUEST_" . $random_number . "_" . $fileName . PHP_EOL;
-        $shm_id = -1;
-        $fileSize = -1;
-        if (file_exists($fileName)) {
-            $fileSize = filesize($fileName);
-            $shm_id = shmop_open(42048, "c", 0644, (int)$fileSize);
-        }
+        $message = "READ_+_REQUEST_+_" . $random_number . "_+_" . $fileName . PHP_EOL;
+
         fwrite($writer[0], $message);
-        self::$pipes_holder[$random_number] = [
-            'parent_pid' => getmypid(),
-            "fileSize" => $fileSize,
-            'shm_id' => $shm_id,
+        self::$operations_holder[$random_number] = [
             'callback' => $callback,
             'err' => $err,
         ];
@@ -44,19 +36,19 @@ class File
     {
         if (strlen($text) <= 1000000000) {
             $random_number = rand(1, 100000);
-            $writer = array_slice(self::$communicationPipes, 2, 1);
-            $shm_id = shmop_open(42050, "c", 0644, (int)strlen($text));
+            $writer = array_slice(self::$communicationPipes, 0, 1);
+            $shm_id = shmop_open($random_number, "c", 0644, (int)strlen($text));
             shmop_write($shm_id, $text, 0);
-            $message = "WRITE_REQUEST_" . $random_number . "_" . $fileName . "_" . strlen($text) . PHP_EOL;
-            $text = '';
+            shmop_close($shm_id);
+            $message = "WRITE_+_REQUEST_+_" . $random_number . "_+_" . $fileName . "_+_" . strlen($text) . PHP_EOL;
             fwrite($writer[0], $message);
+            $text = '';
 
-            self::$pipes_holder[$random_number] = [
-                'parent_pid' => getmypid(),
-                'shm_id' => $shm_id,
+            self::$operations_holder[$random_number] = [
                 'callback' => $callback,
             ];
         } else {
+            $text = '';
             call_user_func($err, "string length is too long !");
         }
     }
