@@ -60,6 +60,11 @@ class EventLoop
         return File::writeFileAsync($fileName, $text);
     }
 
+    public function appendFileAsync($fileName, $text)
+    {
+        return File::appendFileAsync($fileName, $text);
+    }
+
     public function run()
     {
         $reader_write_pipe = fopen("/tmp/pipe", "w");
@@ -153,6 +158,10 @@ class EventLoop
                                         break;
                                     case 'WRITE_SUCCESS':
                                         call_user_func(File::$operations_holder[(int)$randomNumber]['callback'], "file write success");
+                                        unset(File::$operations_holder[(int)$randomNumber]);
+                                        break;
+                                    case 'APPEND_SUCCESS':
+                                        call_user_func(File::$operations_holder[(int)$randomNumber]['callback'], "file append success");
                                         unset(File::$operations_holder[(int)$randomNumber]);
                                         break;
                                 }

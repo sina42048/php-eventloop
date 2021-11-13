@@ -81,6 +81,16 @@ function readAndWriteProcess()
                                     fwrite($fh_main, "ERR_+_NOTFOUND_+_$fileName" . "_+_" . $randomNumber . PHP_EOL);
                                 }
                                 break;
+                            case 'APPEND_REQUEST':
+                                $shm_id = shmop_open($randomNumber, "c", 0644, (int)$text_length);
+                                $file = fopen($fileName, "a");
+                                $shms_container[$randomNumber] = $shm_id;
+                                fwrite($file, shmop_read($shm_id, 0, 0));
+                                fwrite($fh_main, "APPEND_+_SUCCESS_+_$fileName" . "_+_" . $randomNumber . PHP_EOL);
+                                fclose($file);
+                                shmop_delete($shm_id);
+                                shmop_close($shm_id);
+                                break;
                         }
                     }
                 }

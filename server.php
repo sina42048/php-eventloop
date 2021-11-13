@@ -19,6 +19,13 @@ $interval = $loop->setInterval(function () {
     echo "Tick Tock" . PHP_EOL;
 }, 500);
 
+$loop->setTimeout(function () use (&$loop) {
+    $loop->appendFileAsync("test.txt", str_repeat("Bye", 2000000))->then(function ($data) {
+        echo $data . PHP_EOL;
+    })->catch(function ($err) {
+        echo $err . PHP_EOL;
+    });
+}, 5500);
 
 $loop->writeFileAsync("test.txt", str_repeat("Hello", 60000000))->then(function ($data) {
     echo $data . PHP_EOL;

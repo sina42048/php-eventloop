@@ -21,3 +21,4 @@ php client.php
     tcp/ip server
     async file write
     async file read
+    async file append
