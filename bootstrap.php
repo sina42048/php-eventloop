@@ -1,5 +1,6 @@
 <?php
-error_reporting(E_ALL ^ E_WARNING);
+error_reporting(E_ALL ^ (E_WARNING | E_DEPRECATED | E_NOTICE));
+ini_set("memory_limit", -1);
 
 require_once './file/File.php';
 require_once './timer/Timer.php';
@@ -43,7 +44,7 @@ function readAndWriteProcess()
         stream_set_blocking($fh, false);
         while (true) {
             $read[] = $fh;
-            
+
             if (@stream_select($read, $write, $except, null, 0)) {
                 foreach ($read as &$r) {
                     $message = fgets($r);
