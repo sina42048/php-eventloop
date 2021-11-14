@@ -43,8 +43,8 @@ function readAndWriteProcess()
         stream_set_blocking($fh, false);
         while (true) {
             $read[] = $fh;
-
-            if (@stream_select($read, $write, $except, 1, 0)) {
+            
+            if (@stream_select($read, $write, $except, null, 0)) {
                 foreach ($read as &$r) {
                     $message = fgets($r);
                     if ($message) {
