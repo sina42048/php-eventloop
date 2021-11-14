@@ -69,15 +69,13 @@ function readAndWriteProcess()
                             case 'READ_REQUEST':
                                 if (file_exists($fileName)) {
                                     $file = fopen($fileName, "r");
-                                    $content = stream_get_contents($file);
                                     $fileSize = (int)filesize($fileName);
                                     $shm_id = shmop_open($randomNumber, "c", 0644, $fileSize);
                                     $shms_container[$randomNumber] = $shm_id;
-                                    shmop_write($shm_id, $content, 0);
+                                    shmop_write($shm_id, stream_get_contents($file), 0);
                                     fwrite($fh_main, "READ_+_SUCCESS_+_$fileName" . "_+_" . $randomNumber . "_+_" . $fileSize . PHP_EOL);
                                     fclose($file);
                                     shmop_close($shm_id);
-                                    $content = '';
                                 } else {
                                     fwrite($fh_main, "ERR_+_NOTFOUND_+_$fileName" . "_+_" . $randomNumber . PHP_EOL);
                                 }
