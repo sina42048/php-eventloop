@@ -22,3 +22,4 @@ php client.php
     async file write
     async file read
     async file append
+    async file delete
