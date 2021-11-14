@@ -26,6 +26,13 @@ class File
         });
     }
 
+    public static function deleteFIleAsync($fileName)
+    {
+        return new Promise(function ($resolve, $reject) use ($fileName) {
+            self::delete($fileName, $resolve, $reject);
+        });
+    }
+
     private static function read($fileName, $callback, $err)
     {
         $random_number = rand(1, 100000);
@@ -79,6 +86,19 @@ class File
             $text = '';
             call_user_func($err, "string length is too long !");
         }
+    }
+
+    private static function delete($fileName, $callback, $err)
+    {
+        $random_number = rand(1, 100000);
+        $writer = array_slice(self::$communicationPipes, 0, 1);
+        $message = "DELETE_+_REQUEST_+_" . $random_number . "_+_" . $fileName . PHP_EOL;
+
+        fwrite($writer[0], $message);
+        self::$operations_holder[$random_number] = [
+            'callback' => $callback,
+            'err' => $err,
+        ];
     }
 
     # *** OLD CODE ***

@@ -27,6 +27,18 @@ $loop->setTimeout(function () use (&$loop) {
     });
 }, 5500);
 
+$loop->setTimeout(function () use (&$loop) {
+    $loop->writeFileAsync("willBeDelete.txt", str_repeat("delete", 5000))->then(function () use (&$loop) {
+        $loop->deleteFIleAsync("willBeDelete.txt")->then(function ($data) {
+            echo $data . PHP_EOL;
+        })->catch(function ($err) {
+            echo $err . PHP_EOL;
+        });
+    })->catch(function ($err) {
+        echo $err;
+    });
+}, 8000);
+
 $loop->writeFileAsync("test.txt", str_repeat("Hello", 60000000))->then(function ($data) {
     echo $data . PHP_EOL;
 })->catch(function ($error) {

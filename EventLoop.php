@@ -65,6 +65,11 @@ class EventLoop
         return File::appendFileAsync($fileName, $text);
     }
 
+    public function deleteFileAsync($fileName)
+    {
+        return File::deleteFIleAsync($fileName);
+    }
+
     public function run()
     {
         $reader_write_pipe = fopen("/tmp/pipe", "w");
@@ -162,6 +167,10 @@ class EventLoop
                                         break;
                                     case 'APPEND_SUCCESS':
                                         call_user_func(File::$operations_holder[(int)$randomNumber]['callback'], "file append success");
+                                        unset(File::$operations_holder[(int)$randomNumber]);
+                                        break;
+                                    case 'DELETE_SUCCESS':
+                                        call_user_func(File::$operations_holder[(int)$randomNumber]['callback'], "file delete success");
                                         unset(File::$operations_holder[(int)$randomNumber]);
                                         break;
                                 }

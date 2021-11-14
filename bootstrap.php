@@ -91,6 +91,14 @@ function readAndWriteProcess()
                                 shmop_delete($shm_id);
                                 shmop_close($shm_id);
                                 break;
+                            case 'DELETE_REQUEST':
+                                if (file_exists($fileName)) {
+                                    unlink($fileName);
+                                    fwrite($fh_main, "DELETE_+_SUCCESS_+_$fileName" . "_+_" . $randomNumber . PHP_EOL);
+                                } else {
+                                    fwrite($fh_main, "ERR_+_NOTFOUND_+_$fileName" . "_+_" . $randomNumber . PHP_EOL);
+                                }
+                                break;
                         }
                     }
                 }
