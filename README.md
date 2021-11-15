@@ -8,7 +8,7 @@ simple php event loop to demonstrate how event loop work behind the scene
 ```php
 require_once './EventLoop.php';
 
-$loop = new EventLoop(); // first step is create and event loop instance
+$loop = new EventLoop(); // first step is create an event loop instance
 
 $loop->setTimeout(function() {}, 1000); // callback function executed after 1 second
 
@@ -22,7 +22,7 @@ $loop->readFileAsync("fileName.txt")
 
 $loop->writeFileAsync("fileName.txt", "data that should be write to file")
     ->then(function ($data) { echo $data . PHP_EOL; })
-    ->catch(function ($err) { echo $error . PHP_EOL; }); // async write to file (promise based)
+    ->catch(function ($err) { echo $err . PHP_EOL; }); // async write to file (promise based)
 
 $loop->appendFileAsync("fileName.txt", "data that should be append to file")
     ->then(function ($data) { echo $data . PHP_EOL; })
@@ -34,7 +34,7 @@ $loop->deleteFIleAsync("fileName.txt")
 
 $loop->createServer("tcp://127.0.0.1:8080")
     ->then(function ($ip) { echo 'Server Started at port : ' . $ip . PHP_EOL;})
-    ->catch(function ($err) {echo $error . PHP_EOL; }); // async tcp/ip server
+    ->catch(function ($err) {echo $err . PHP_EOL; }); // async tcp/ip server
 
 //async await style (like javascript async/await)
 Async::run(function () use (&$loop) {
