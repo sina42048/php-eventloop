@@ -3,7 +3,7 @@ require_once './bootstrap.php';
 
 class EventLoop
 {
-    private $socket;
+    private $socket = [];
     private $connections = [];
     private $write_holder = [];
     private $read = [];
@@ -14,13 +14,14 @@ class EventLoop
     public function createServer($ipAddress)
     {
         $promise = new Promise(function ($resolve, $reject) use ($ipAddress) {
-            $this->socket = stream_socket_server($ipAddress, $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN);
-            if ($this->socket) {
+            $socket = stream_socket_server($ipAddress, $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN);
+            if ($socket) {
                 $resolve($ipAddress);
+                stream_set_blocking($socket, false);
+                $this->socket[] = $socket;
             } else {
                 $reject("failed to open server");
             }
-            stream_set_blocking($this->socket, false);
         });
         return $promise;
     }
@@ -82,8 +83,10 @@ class EventLoop
 
         while (true) {
             $this->read = $this->connections;
-            if ($this->socket) {
-                $this->read[] = $this->socket;
+            if (count($this->socket)) {
+                foreach ($this->socket as $socket) {
+                    $this->read[] = $socket;
+                }
             }
             $this->read[] = File::$communicationPipes[(int)$reader_read_pipe];
             $this->write = $this->write_holder;
