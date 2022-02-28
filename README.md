@@ -16,6 +16,37 @@ $loop->setInterval(function() {}, 1000); // callback function executed every 1 s
 
 $loop->setImmediate(function() {}); // callback function executed at the end of loop before going to next iteration 
 
+
+HTTP::get("https://jsonplaceholder.typicode.com/todos/1", [])
+    ->then(function ($response) {
+        var_dump($response);
+    })->catch(function ($err) {
+        echo $err . PHP_EOL;
+    }); // async http get request
+HTTP::post("https://jsonplaceholder.typicode.com/posts", [
+    "title" => "title number 1",
+    "body" => "description"
+])->then(function ($response) {
+    var_dump($response);
+})->catch(function ($err) {
+    echo $err . PHP_EOL;
+}); // async http post request
+HTTP::put("https://jsonplaceholder.typicode.com/posts/1", [
+    "id" => 1,
+    "title" => "title number 1",
+    "body" => "description"
+])->then(function ($response) {
+    var_dump($response);
+})->catch(function ($err) {
+    echo $err . PHP_EOL;
+}); // async http put request
+HTTP::delete("https://jsonplaceholder.typicode.com/posts/1", [])->then(function ($response) {
+    echo "POST NUMBER 1 DELETED SUCCESS" . PHP_EOL;
+})->catch(function ($err) {
+    echo $err . PHP_EOL;
+}); // async http delete request
+
+
 $loop->readFileAsync("fileName.txt")
     ->then(function($data) { echo $data . PHP_EOL; })
     ->catch(function($err) { echo $err . PHP_EOL; }); // async read file (promise based)
@@ -72,3 +103,4 @@ php client.php
     async file read
     async file append
     async file delete
+    async http GET|POST|PUT|DELETE request
