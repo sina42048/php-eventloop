@@ -3,6 +3,8 @@ error_reporting(E_ALL ^ (E_WARNING | E_DEPRECATED | E_NOTICE));
 ini_set("memory_limit", -1);
 
 require_once './file/File.php';
+require_once './network/HTTPRequester.php';
+require_once './network/HTTP.php';
 require_once './timer/Timer.php';
 require_once './promise/Promise.php';
 require_once './async_await/Async.php';

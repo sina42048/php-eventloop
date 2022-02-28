@@ -89,6 +89,10 @@ class EventLoop
                 }
             }
             $this->read[] = File::$communicationPipes[(int)$reader_read_pipe];
+
+            foreach (HTTP::$communicationPipes as $httpPipe) {
+                $this->read[] = $httpPipe;
+            }
             $this->write = $this->write_holder;
 
             if (count($this->write) || count($this->read) || count(Timer::$timers) || count(Timer::$futureTicks)) {
@@ -124,7 +128,6 @@ class EventLoop
                     $delayNextLoop = [0, 200000];
                 }
 
-
                 if (count($this->read) || count($this->write)) {
                     if (@stream_select($this->read, $this->write, $this->except, $delayNextLoop[0], $delayNextLoop[1])) {
                         foreach ($this->write as &$w) {
@@ -144,7 +147,6 @@ class EventLoop
                                 }
                             }
                         }
-
                         foreach ($this->read as &$r) {
                             if (array_key_exists((int)$r, File::$communicationPipes)) {
                                 $message = fgets($r);
@@ -177,6 +179,31 @@ class EventLoop
                                         unset(File::$operations_holder[(int)$randomNumber]);
                                         break;
                                 }
+                            } else if (array_key_exists((int)$r, HTTP::$communicationPipes)) {
+                                $message = stream_get_contents($r);
+                                $message = explode("_+_", $message);
+                                $response = trim($message[3]);
+                                $status = trim($message[0]) . "_" . trim($message[1]) . "_" . trim($message[2]);
+
+
+                                switch ($status) {
+                                    case 'HTTP_GET_RESPONSE':
+                                    case 'HTTP_POST_RESPONSE':
+                                    case 'HTTP_PUT_RESPONSE':
+                                    case 'HTTP_DELETE_RESPONSE':
+                                        call_user_func(HTTP::$operations_holder[(int)$r]['callback'], $response);
+                                        break;
+                                    case 'HTTP_GET_FAILED':
+                                    case 'HTTP_POST_FAILED':
+                                    case 'HTTP_PUT_FAILED':
+                                    case 'HTTP_DELETE_FAILED':
+                                        call_user_func(HTTP::$operations_holder[(int)$r]['err'], "FAILED_LOAD_RESOURCE");
+                                        break;
+                                }
+                                fclose(HTTP::$communicationPipes[(int)$r]);
+                                pcntl_wait($status);
+                                unset(HTTP::$operations_holder[(int)$r]);
+                                unset(HTTP::$communicationPipes[(int)$r]);
                             } else {
                                 if ($c = @stream_socket_accept($r, 0, $peer)) {
                                     stream_set_blocking($c, 0);
