@@ -3,6 +3,37 @@ require_once './EventLoop.php';
 
 $loop = new EventLoop();
 
+$loop->setTimeout(function () {
+    HTTP::get("https://jsonplaceholder.typicode.com/todos/1", [])
+        ->then(function ($response) {
+            var_dump($response);
+        })->catch(function ($err) {
+            echo $err . PHP_EOL;
+        });
+    HTTP::post("https://jsonplaceholder.typicode.com/posts", [
+        "title" => "title number 1",
+        "body" => "description"
+    ])->then(function ($response) {
+        var_dump($response);
+    })->catch(function ($err) {
+        echo $err . PHP_EOL;
+    });
+    HTTP::put("https://jsonplaceholder.typicode.com/posts/1", [
+        "id" => 1,
+        "title" => "title number 1",
+        "body" => "description"
+    ])->then(function ($response) {
+        var_dump($response);
+    })->catch(function ($err) {
+        echo $err . PHP_EOL;
+    });
+    HTTP::delete("https://jsonplaceholder.typicode.com/posts/1", [])->then(function ($response) {
+        echo "POST NUMBER 1 DELETED SUCCESS" . PHP_EOL;
+    })->catch(function ($err) {
+        echo $err . PHP_EOL;
+    });
+}, 2000);
+
 // promise based timer example
 $promiseTimeout = (new Promise(function ($resolve) use (&$loop) {
     $loop->setTimeout($resolve, 1000);
