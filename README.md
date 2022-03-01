@@ -10,6 +10,7 @@ simple php event loop to demonstrate how event loop work behind the scene
 CURL
 SOCKETS
 PCNTL
+POSIX
 SHARED MEMORY
 ```
 
