@@ -91,8 +91,7 @@ class HTTP
             exit(0);
         } else {
             // parent
-            usleep(15);
-            $pipe = fopen($pipe_name, "r");
+            $pipe = fopen($pipe_name, "r+");
             stream_set_blocking($pipe, false);
 
             self::$communicationPipes[(int)$pipe] = $pipe;
