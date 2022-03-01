@@ -4,6 +4,15 @@ simple php event loop to demonstrate how event loop work behind the scene
 ```
 *** windows is not support ***
 ```
+
+# Required extension
+```
+CURL
+SOCKETS
+PCNTL
+SHARED MEMORY
+```
+
 # how to use
 ```php
 require_once './EventLoop.php';
