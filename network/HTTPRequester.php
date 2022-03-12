@@ -5,7 +5,7 @@ class HTTPRequester
      * @description Make HTTP-GET call
      * @param $url
      * @param array $params
-     * @return HTTP-Response body or an empty string if the request fails or is empty
+     * @return array multihandler and curlinit
      */
     public static function HTTPGet($url, array $params)
     {
@@ -27,7 +27,7 @@ class HTTPRequester
      * @description Make HTTP-POST call
      * @param $url
      * @param array $params
-     * @return HTTP-Response body or an empty string if the request fails or is empty
+     * @return array multihandler and curlinit
      */
     public static function HTTPPost($url, array $params)
     {
@@ -52,7 +52,7 @@ class HTTPRequester
      * @description Make HTTP-PUT call
      * @param $url
      * @param array $params
-     * @return HTTP-Response body or an empty string if the request fails or is empty
+     * @return array multihandler and curlinit
      */
     public static function HTTPPut($url, array $params)
     {
@@ -77,7 +77,7 @@ class HTTPRequester
      * @category Make HTTP-DELETE call
      * @param $url
      * @param array $params
-     * @return HTTP-Response body or an empty string if the request fails or is empty
+     * @return array multihandler and curlinit
      */
     public static function HTTPDelete($url, array $params)
     {
