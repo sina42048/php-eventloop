@@ -89,11 +89,35 @@ class EventLoop
                 }
             }
             $this->read[] = File::$communicationPipes[(int)$reader_read_pipe];
-
-            foreach (HTTP::$communicationPipes as $httpPipe) {
-                $this->read[] = $httpPipe;
-            }
             $this->write = $this->write_holder;
+
+            foreach (HTTP::$multi_handlers as $key => $mh) {
+                curl_multi_exec($mh['mh'], $active);
+                if ($active === 0) {
+                    $response = curl_multi_getcontent($mh['ch']);
+                    $statusCode = curl_getinfo($mh['ch'], CURLINFO_HTTP_CODE);
+
+                    if ($statusCode > 299) {
+                        call_user_func($mh['err'], [
+                            'data' => $response,
+                            'status' => $statusCode
+                        ]);
+                    } else {
+                        call_user_func($mh['callback'], [
+                            'data' => $response,
+                            'status' => $statusCode
+                        ]);
+                    }
+                }
+                if ($active < 0) {
+                    call_user_func($mh['err'], 'ERR_CONNECTION');
+                }
+                if ($active < 0 || $active === 0) {
+                    curl_multi_remove_handle($mh['mh'], $mh['ch']);
+                    curl_multi_close($mh['mh']);
+                    unset(HTTP::$multi_handlers[$key]);
+                }
+            }
 
             if (count($this->write) || count($this->read) || count(Timer::$timers) || count(Timer::$futureTicks)) {
                 $currentTime = hrtime(true);
@@ -179,31 +203,6 @@ class EventLoop
                                         unset(File::$operations_holder[(int)$randomNumber]);
                                         break;
                                 }
-                            } else if (array_key_exists((int)$r, HTTP::$communicationPipes)) {
-                                $message = stream_get_contents($r);
-                                $message = explode("_+_", $message);
-                                $response = trim($message[3]);
-                                $status = trim($message[0]) . "_" . trim($message[1]) . "_" . trim($message[2]);
-
-
-                                switch ($status) {
-                                    case 'HTTP_GET_RESPONSE':
-                                    case 'HTTP_POST_RESPONSE':
-                                    case 'HTTP_PUT_RESPONSE':
-                                    case 'HTTP_DELETE_RESPONSE':
-                                        call_user_func(HTTP::$operations_holder[(int)$r]['callback'], $response);
-                                        break;
-                                    case 'HTTP_GET_FAILED':
-                                    case 'HTTP_POST_FAILED':
-                                    case 'HTTP_PUT_FAILED':
-                                    case 'HTTP_DELETE_FAILED':
-                                        call_user_func(HTTP::$operations_holder[(int)$r]['err'], "FAILED_LOAD_RESOURCE");
-                                        break;
-                                }
-                                fclose(HTTP::$communicationPipes[(int)$r]);
-                                pcntl_wait($status);
-                                unset(HTTP::$operations_holder[(int)$r]);
-                                unset(HTTP::$communicationPipes[(int)$r]);
                             } else {
                                 if ($c = @stream_socket_accept($r, 0, $peer)) {
                                     stream_set_blocking($c, 0);

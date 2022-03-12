@@ -17,34 +17,30 @@ $loop->setInterval(function() {}, 1000); // callback function executed every 1 s
 $loop->setImmediate(function() {}); // callback function executed at the end of loop before going to next iteration 
 
 
-HTTP::get("https://jsonplaceholder.typicode.com/todos/1", [])
-    ->then(function ($response) {
-        var_dump($response);
-    })->catch(function ($err) {
-        echo $err . PHP_EOL;
-    }); // async http get request
-HTTP::post("https://jsonplaceholder.typicode.com/posts", [
-    "title" => "title number 1",
-    "body" => "description"
-])->then(function ($response) {
+// async get request
+HTTP::fetch('GET', 'https://jsonplaceholder.typicode.com/todos/1', [])
+    ->then(function($response) { var_dump($response); })
+    ->catch(function($err) { var_dump($err); }); 
+// async post request
+HTTP::fetch('POST', 'https://jsonplaceholder.typicode.com/todos', [
+    'title' => 'test'
+])->then(function($response) {
     var_dump($response);
-})->catch(function ($err) {
-    echo $err . PHP_EOL;
-}); // async http post request
-HTTP::put("https://jsonplaceholder.typicode.com/posts/1", [
-    "id" => 1,
-    "title" => "title number 1",
-    "body" => "description"
-])->then(function ($response) {
+})->catch(function($err) {
+    var_dump($err);
+});
+// async put request
+HTTP::fetch('PUT', 'https://jsonplaceholder.typicode.com/todos/1', [
+    'title' => "updated"
+])->then(function($response) {
     var_dump($response);
-})->catch(function ($err) {
-    echo $err . PHP_EOL;
-}); // async http put request
-HTTP::delete("https://jsonplaceholder.typicode.com/posts/1", [])->then(function ($response) {
-    echo "POST NUMBER 1 DELETED SUCCESS" . PHP_EOL;
-})->catch(function ($err) {
-    echo $err . PHP_EOL;
-}); // async http delete request
+})->catch(function($err) {
+    var_dump($err);
+});
+// async delete request
+HTTP::fetch('DELETE', 'https://jsonplaceholder.typicode.com/todos/1', [])
+    ->then(function($response) { var_dump($response); })
+    ->catch(function($err) { var_dump($err); });
 
 
 $loop->readFileAsync("fileName.txt")
