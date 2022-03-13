@@ -9,7 +9,6 @@ class EventLoop
     private $read = [];
     private $write = [];
     private $except = null;
-    private $messageQueue = [];
 
     public function createServer($ipAddress)
     {
@@ -156,20 +155,17 @@ class EventLoop
                     if (@stream_select($this->read, $this->write, $this->except, $delayNextLoop[0], $delayNextLoop[1])) {
                         foreach ($this->write as &$w) {
                             $peer = stream_socket_get_name($w, true);
-                            foreach ($this->messageQueue as &$messages) {
-                                foreach ($messages as $key => &$msg) {
-                                    $written = fwrite($w, $msg);
-                                    if ($written === strlen($msg)) {
-                                        unset($this->messageQueue[$peer][$key]);
-                                        if (empty($this->messageQueue[$peer])) {
-                                            unset($this->write_holder[$peer]);
-                                            unset($this->messageQueue[$peer]);
-                                        }
-                                    } else {
-                                        $this->messageQueue[$peer][$key] = substr($msg, $written);
-                                    }
-                                }
-                            }
+                            stream_set_blocking($w, true);
+                            $data  = "HTTP/1.1 200 OK\r\n";
+                            $data .= "Date:" . date('D') . ', ' . date('m') . ' ' . date('M') . ' ' . date('Y') . ' ' . date('H:i:s') . ' GMT' .  "\r\n";
+                            $data .= "Server: Sina\r\n";
+                            $data .= "Connection: close\r\n";
+                            $data .= "Content-Type: text/plain \r\n";
+                            $data .= "Content-length: 12\r\n\r\n";
+                            $data .= "Hello World!";
+                            fwrite($w, $data);
+                            fclose($w);
+                            unset($this->write_holder[$peer]);
                         }
                         foreach ($this->read as &$r) {
                             if (array_key_exists((int)$r, File::$communicationPipes)) {
@@ -207,25 +203,14 @@ class EventLoop
                                 if ($c = @stream_socket_accept($r, 0, $peer)) {
                                     stream_set_blocking($c, 0);
                                     $this->connections[$peer] = $c;
+                                    echo PHP_EOL;
                                     echo $peer . ' Connected' . PHP_EOL;
-                                    $this->write_holder[$peer] = $this->connections[$peer];
-                                    $this->messageQueue[$peer][] = "Hello user " . $peer;
                                 } else {
                                     $peer = stream_socket_get_name($r, true);
-                                    if (feof($r)) {
-                                        echo 'Connection closed ' . $peer . PHP_EOL;
-                                        unset($this->connections[$peer]);
-                                        unset($this->write_holder[$peer]);
-                                        unset($this->messageQueue[$peer]);
-                                        fclose($r);
-                                    } else {
-                                        $contents = fread($r, 1024);
-                                        if ($contents) {
-                                            echo "Client $peer said $contents" . PHP_EOL;
-                                            $this->messageQueue[$peer][] = "$contents recieved ! :D";
-                                            $this->write_holder[$peer] = $this->connections[$peer];
-                                        }
-                                    }
+                                    $contents = stream_get_contents($r);
+                                    echo $contents . PHP_EOL;
+                                    $this->write_holder[$peer] = $this->connections[$peer];
+                                    unset($this->connections[$peer]);
                                 }
                             }
                         }
