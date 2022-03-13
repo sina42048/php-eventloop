@@ -71,7 +71,7 @@ $loop->deleteFIleAsync("fileName.txt")
 
 $loop->createServer("tcp://127.0.0.1:8080")
     ->then(function ($ip) { echo 'Server Started at port : ' . $ip . PHP_EOL;})
-    ->catch(function ($err) {echo $err . PHP_EOL; }); // async tcp/ip server
+    ->catch(function ($err) {echo $err . PHP_EOL; }); // async http server
 
 //async await style (like javascript async/await)
 Async::run(function () use (&$loop) {
@@ -91,20 +91,20 @@ Async::run(function () use (&$loop) {
 
 $loop->run(); // start the event loop
 ```
-# Example server and client
+# Example server
 **first start the server**
 ```php
 php server.php
 ```
-**then run client script as many as you want**
+**then open your browser**
 ```php
-php client.php
+localhost:8080
 ```
 # features
     setInterval
     setTimeout
     setImmediate
-    tcp/ip server
+    http echo server
     async file write
     async file read
     async file append
